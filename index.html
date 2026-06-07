@@ -428,6 +428,11 @@
   <div id="global-progress" style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;">
     <span id="stat-slots"></span>
     <span id="stat-logs"></span>
+    <div style="display:flex;gap:6px;margin-top:4px;">
+      <button id="btn-export" style="font-size:0.7rem;padding:3px 8px;background:#1a1a2e;border:1px solid #c8a96e;color:#c8a96e;border-radius:4px;cursor:pointer;">⬇ Export</button>
+      <button id="btn-import" style="font-size:0.7rem;padding:3px 8px;background:#1a1a2e;border:1px solid #c8a96e;color:#c8a96e;border-radius:4px;cursor:pointer;">⬆ Import</button>
+      <input type="file" id="import-file-input" accept=".json" style="display:none;">
+    </div>
   </div>
 </header>
 
@@ -2035,6 +2040,41 @@ document.getElementById("btn-complete-task").addEventListener("click", () => {
   checkAutoProgress();
 });
 
+
+// ── EXPORT / IMPORT ──────────────────────────────────────────────────────────
+document.getElementById("btn-export").addEventListener("click", () => {
+  const data = JSON.stringify(state, null, 2);
+  const blob = new Blob([data], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "osrs-progress.json";
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+document.getElementById("btn-import").addEventListener("click", () => {
+  document.getElementById("import-file-input").click();
+});
+
+document.getElementById("import-file-input").addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    try {
+      const imported = JSON.parse(ev.target.result);
+      Object.assign(state, imported);
+      saveState(state);
+      renderAll();
+      alert("Progressie geladen!");
+    } catch {
+      alert("Ongeldig bestand. Zorg dat je een geldig osrs-progress.json bestand importeert.");
+    }
+    e.target.value = "";
+  };
+  reader.readAsText(file);
+});
 
 // ── BOOT ─────────────────────────────────────────────────────────────────────
 renderAll();
