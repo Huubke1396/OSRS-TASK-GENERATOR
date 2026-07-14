@@ -419,6 +419,20 @@
     color: #888;
   }
 </style>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyDGPHqoX4Aq-BESJ6MLoejv0rVRwQyBifM",
+    authDomain: "osrs-task-generator-mythos.firebaseapp.com",
+    databaseURL: "https://osrs-task-generator-mythos-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "osrs-task-generator-mythos",
+    storageBucket: "osrs-task-generator-mythos.firebasestorage.app",
+    messagingSenderId: "56945982688",
+    appId: "1:56945982688:web:e1199820a9641fa1f76485"
+  };
+  firebase.initializeApp(firebaseConfig);
+</script>
 </head>
 <body>
 
@@ -428,11 +442,13 @@
   <div id="global-progress" style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;">
     <span id="stat-slots"></span>
     <span id="stat-logs"></span>
-    <div style="display:flex;gap:6px;margin-top:4px;">
+    <div style="display:flex;gap:6px;margin-top:4px;align-items:center;">
+      <button id="btn-sync" style="font-size:0.7rem;padding:3px 8px;background:#1a1a2e;border:1px solid #c8a96e;color:#c8a96e;border-radius:4px;cursor:pointer;">🔗 Sync</button>
       <button id="btn-export" style="font-size:0.7rem;padding:3px 8px;background:#1a1a2e;border:1px solid #c8a96e;color:#c8a96e;border-radius:4px;cursor:pointer;">⬇ Export</button>
       <button id="btn-import" style="font-size:0.7rem;padding:3px 8px;background:#1a1a2e;border:1px solid #c8a96e;color:#c8a96e;border-radius:4px;cursor:pointer;">⬆ Import</button>
       <input type="file" id="import-file-input" accept=".json" style="display:none;">
     </div>
+    <span id="sync-status" style="font-size:0.65rem;color:#888;"></span>
   </div>
 </header>
 
@@ -1586,6 +1602,7 @@ function loadState() {
 }
 function saveState(state) {
   localStorage.setItem(LS_KEY, JSON.stringify(state));
+  cloudPush();
 }
 
 let state = loadState();
@@ -2075,6 +2092,86 @@ document.getElementById("import-file-input").addEventListener("change", (e) => {
   };
   reader.readAsText(file);
 });
+
+// ── CLOUD SYNC (Firebase) ────────────────────────────────────────────────────
+const SYNC_KEY = "osrs_sync_code";
+let syncCode = localStorage.getItem(SYNC_KEY) || "";
+let cloudRef = null;
+let lastPushed = "";
+let pushTimer = null;
+
+function encodeKey(s) {
+  return s.trim().toLowerCase().replace(/[.#$\[\]\/\s]/g, "_");
+}
+
+function updateSyncUI() {
+  const el = document.getElementById("sync-status");
+  if (!el) return;
+  if (syncCode) {
+    el.textContent = "🟢 Gekoppeld: " + syncCode;
+    el.style.color = "#7ac87a";
+  } else {
+    el.textContent = "⚪ Niet gekoppeld";
+    el.style.color = "#888";
+  }
+}
+
+function cloudPush() {
+  if (!cloudRef) return;
+  clearTimeout(pushTimer);
+  pushTimer = setTimeout(() => {
+    lastPushed = JSON.stringify(state);
+    cloudRef.set(state).catch(e => console.warn("Sync opslaan mislukt:", e));
+  }, 600);
+}
+
+function connectSync(code) {
+  if (cloudRef) { cloudRef.off(); cloudRef = null; }
+  syncCode = (code || "").trim();
+  localStorage.setItem(SYNC_KEY, syncCode);
+  updateSyncUI();
+  if (!syncCode) return;
+
+  cloudRef = firebase.database().ref("profiles/" + encodeKey(syncCode));
+  cloudRef.once("value").then(snap => {
+    const cloud = snap.val();
+    if (cloud && Object.keys(cloud).length) {
+      state = cloud;
+      localStorage.setItem(LS_KEY, JSON.stringify(state));
+      renderAll();
+    } else {
+      lastPushed = JSON.stringify(state);
+      cloudRef.set(state);
+    }
+    // Live meeluisteren naar andere apparaten
+    cloudRef.on("value", s2 => {
+      const remote = s2.val() || {};
+      const remoteStr = JSON.stringify(remote);
+      if (remoteStr === lastPushed) return;
+      if (remoteStr === JSON.stringify(state)) return;
+      state = remote;
+      localStorage.setItem(LS_KEY, JSON.stringify(state));
+      renderAll();
+    });
+  }).catch(e => {
+    console.warn("Sync koppelen mislukt:", e);
+    alert("Kon niet koppelen aan de sync. Check je internetverbinding.");
+  });
+}
+
+document.getElementById("btn-sync").addEventListener("click", () => {
+  const code = prompt(
+    "Vul je sync-code in (bijv. 'dennis-osrs').\n\n" +
+    "Gebruik dezelfde code op elke pc/laptop om je progressie te delen.\n" +
+    "Laat leeg en klik OK om te ontkoppelen.",
+    syncCode
+  );
+  if (code === null) return; // geannuleerd
+  connectSync(code);
+});
+
+updateSyncUI();
+if (syncCode) connectSync(syncCode);
 
 // ── BOOT ─────────────────────────────────────────────────────────────────────
 renderAll();
