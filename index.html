@@ -1540,6 +1540,20 @@ const TASKS = [
   { id: "ach-el-pet-farm-executioner", name: "Pet Farm Executioner: Skin 1000 chickens at the pet farm",    image: "https://oldschool.runescape.wiki/images/Chicken_(1).png",        requirements: "None", tier: "elite", category: "achievements" },
 
   // ════════════════════════════════
+  // COMBAT MASTERY
+  // ════════════════════════════════
+  { id: "cm-willow",   name: "Chop 500 willow trees",                                   image: "https://oldschool.runescape.wiki/images/Raging_Echoes_League_icon.png?a82c3", requirements: "None", tier: "easy",   category: "combat-mastery" },
+  { id: "cm-scurrius", name: "Defeat Scurrius 10 times",                                 image: "https://oldschool.runescape.wiki/images/Raging_Echoes_League_icon.png?a82c3", requirements: "None", tier: "easy",   category: "combat-mastery" },
+  { id: "cm-jad",      name: "Defeat TzTok-Jad in the Fight Caves",                      image: "https://oldschool.runescape.wiki/images/Raging_Echoes_League_icon.png?a82c3", requirements: "None", tier: "easy",   category: "combat-mastery" },
+  { id: "cm-cb100",    name: "Reach combat level 100",                                   image: "https://oldschool.runescape.wiki/images/Raging_Echoes_League_icon.png?a82c3", requirements: "None", tier: "medium", category: "combat-mastery" },
+  { id: "cm-50slayer", name: "Complete 50 slayer tasks",                                 image: "https://oldschool.runescape.wiki/images/Raging_Echoes_League_icon.png?a82c3", requirements: "None", tier: "medium", category: "combat-mastery" },
+  { id: "cm-100mons",  name: "Defeat 100 monsters with combat level 100 or more",        image: "https://oldschool.runescape.wiki/images/Raging_Echoes_League_icon.png?a82c3", requirements: "None", tier: "medium", category: "combat-mastery" },
+  { id: "cm-cox",      name: "Complete Chambers of Xeric 10 times",                      image: "https://oldschool.runescape.wiki/images/Raging_Echoes_League_icon.png?a82c3", requirements: "None", tier: "hard",   category: "combat-mastery" },
+  { id: "cm-tob",      name: "Complete Theatre of Blood 10 times",                       image: "https://oldschool.runescape.wiki/images/Raging_Echoes_League_icon.png?a82c3", requirements: "None", tier: "hard",   category: "combat-mastery" },
+  { id: "cm-zuk",      name: "Defeat TzKal-Zuk",                                         image: "https://oldschool.runescape.wiki/images/Raging_Echoes_League_icon.png?a82c3", requirements: "None", tier: "hard",   category: "combat-mastery" },
+  { id: "cm-doe",      name: "Complete Dominion of Echoes 1 time",                       image: "https://oldschool.runescape.wiki/images/Raging_Echoes_League_icon.png?a82c3", requirements: "None", tier: "elite",  category: "combat-mastery" },
+
+  // ════════════════════════════════
   // PASSIVE
   // ════════════════════════════════
   // MEDIUM — MINIGAMES
@@ -1758,7 +1772,8 @@ function renderActiveTab() {
   });
 }
 
-const CATEGORIES = ["bosses", "raids", "clues", "minigames", "other", "achievements", "boss-pets", "raid-pets", "skilling-pets"];
+const CATEGORIES = ["bosses", "raids", "clues", "minigames", "other", "achievements", "combat-mastery", "boss-pets", "raid-pets", "skilling-pets"];
+const CATEGORY_LABELS = { "combat-mastery": "Combat Mastery" };
 
 function buildPanel(tier) {
   const frag = document.createDocumentFragment();
@@ -1786,7 +1801,7 @@ function buildPanel(tier) {
 
     const header = document.createElement("div");
     header.className = "category-header";
-    header.textContent = capitalize(cat);
+    header.textContent = CATEGORY_LABELS[cat] || capitalize(cat);
     section.appendChild(header);
 
     const grid = document.createElement("div");
